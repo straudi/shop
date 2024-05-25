@@ -20,20 +20,22 @@ public class SecurityConfig{
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.formLogin((formLogin) ->
-                        formLogin.loginPage("/members/login/")
+                        formLogin.loginPage("/members/login")
                                 .defaultSuccessUrl("/")
                                 .usernameParameter("email")
+                                .failureUrl("/members/login/error")
                 )
                 .logout((logout) ->
-                        logout.logoutSuccessUrl("/")
+                        logout.logoutRequestMatcher(new AntPathRequestMatcher("/members/logout"))
+                                .logoutSuccessUrl("/")
                                 .invalidateHttpSession(true)
+                )
+                .authorizeRequests((authorizeRequests) ->
+                        authorizeRequests.requestMatchers("/css/**", "/js/**", "/img/**").permitAll()
+                        .requestMatchers("/", "/members/**", "/item/**", "/images/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().authenticated()
                 );
-
-        http.authorizeRequests()
-                .requestMatchers("/css/**", "/js/**", "/img/**").permitAll()
-                .requestMatchers("/", "/members/**", "/item/**", "/images/**").permitAll()
-                .requestMatchers("/admin/**").hasRole("ADMIN")
-                .anyRequest().authenticated();
 
         return http.build();
     }
